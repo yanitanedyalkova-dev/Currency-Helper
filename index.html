@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Currency Helper</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+<style>
+body {height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--text)}
+    .wrap{max-width:920px;margin:18px auto;padding:12px}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:18px}
+    .subtitle{font-size:13px;color:var(--muted);margin-top:6px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .theme-btn{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:8px;border-radius:8px;cursor:pointer}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+    @media(min-width:920px){ .grid{grid-template-columns:1fr 1fr 1fr} }
+    .section{padding:10px;border-radius:10px}
+    .bgn{background:var(--bgn-bg);border-left:6px solid var(--bgn)}
+    .eur{background:var(--eur-bg);border-left:6px solid var(--eur)}
+    .summary{background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent);border-left:6px solid var(--accent)}
+
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    td,th{padding:6px 4px}
+    th{font-weight:600;text-align:left;color:var(--muted);font-size:13px}
+    .nominal{width:40%}
+    .count{width:25%}
+    .line-total{text-align:right;width:35%}
+    input[type="number"], input[type="text"]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:transparent;color:var(--text);box-sizing:border-box}
+    input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .small-muted{font-size:12px;color:var(--muted);margin-top:6px}
+    .tot-row{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-radius:8px;margin-top:8px;background:rgba(0,0,0,0.02)}
+    .tot-left{font-weight:700}
+    .tot-right{font-weight:700}
+    .btn{padding:10px 12px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer}
+    .secondary{background:transparent;border:1px solid rgba(0,0,0,0.06);color:var(--text)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+    footer{margin-top:10px;font-size:12px;color:var(--muted);text-align:center}
+    .table-wrap{overflow:auto;padding-bottom:4px}
+    .muted-note{font-size:12px;color:var(--muted);margin-top:8px}
+    pre.report{white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,0.02);padding:8px;border-radius:8px;margin-top:8px;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="application" aria-label="Currency helper">
+      <header>
+        <div>
+          <h1>🇧🇬 Лева ↔ 🇪🇺 Евро</h1>
+          <div class="subtitle">Бързо броене и конвертиране — фиксиран курс 1 EUR = 1.95583 BGN</div>
+        </div>
+        <div class="controls" aria-hidden="false">
+          <button id="themeToggle" class="theme-btn" title="Светла/Тъмна тема">🌞</button>
+        </div>
+      </header>
+
+      <div class="grid" style="margin-top:14px">
+        <!-- BGN section -->
+        <section class="section bgn card" aria-labelledby="bgnTitle">
+          <h3 id="bgnTitle" style="margin:0 0 8px">💚 Лева</h3>
+          <div class="table-wrap">
+            <table id="bgnTable" aria-describedby="bgnDesc">
+              <thead>
+                <tr><th class="nominal">Номинал</th><th class="count">Брой</th><th class="line-total">Общо (лв)</th></tr>
+              </thead>
+              <tbody>
+                <tr data-nominal="100" data-currency="BGN"><td class="nominal">100 лв</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 лв</td></tr>
+                <tr data-nominal="50" data-currency="BGN"><td class="nominal">50 лв</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 лв</td></tr>
+                <tr data-nominal="20" data-currency="BGN"><td class="nominal">20 лв</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 лв</td></tr>
+                <tr data-nominal="10" data-currency="BGN"><td class="nominal">10 лв</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 лв</td></tr>
+                <tr data-nominal="5" data-currency="BGN"><td class="nominal">5 лв</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 лв</td></tr>
+                <tr data-nominal="2" data-currency="BGN"><td class="nominal">2 лв</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 лв</td></tr>
+                <tr data-nominal="1" data-currency="BGN"><td class="nominal">1 лв</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 лв</td></tr>
+                <tr data-nominal="stotinki" data-currency="BGN" data-iscents="1"><td class="nominal">Стотинки – общо</td><td class="count"><input type="text" placeholder="напр. 0.80"></td><td class="line-total">0.00 лв</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="small-muted" id="bgnDesc">Попълнете бройките за банкнотите/монетите. За стотинките въведете общата стойност в лева (например 0.80).</div>
+        </section>
+
+        <!-- EUR section -->
+        <section class="section eur card" aria-labelledby="eurTitle">
+          <h3 id="eurTitle" style="margin:0 0 8px">💙 Евро</h3>
+          <div class="table-wrap">
+            <table id="eurTable" aria-describedby="eurDesc">
+              <thead>
+                <tr><th class="nominal">Номинал</th><th class="count">Брой</th><th class="line-total">Общо (€)</th></tr>
+              </thead>
+              <tbody>
+                <tr data-nominal="500" data-currency="EUR"><td class="nominal">500 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="200" data-currency="EUR"><td class="nominal">200 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="100" data-currency="EUR"><td class="nominal">100 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="50" data-currency="EUR"><td class="nominal">50 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="20" data-currency="EUR"><td class="nominal">20 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="10" data-currency="EUR"><td class="nominal">10 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="5" data-currency="EUR"><td class="nominal">5 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="2" data-currency="EUR"><td class="nominal">2 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="1" data-currency="EUR"><td class="nominal">1 €</td><td class="count"><input type="number" min="0" step="1" inputmode="numeric" placeholder="0"></td><td class="line-total">0.00 €</td></tr>
+                <tr data-nominal="cents" data-currency="EUR" data-iscents="1"><td class="nominal">Центове – общо</td><td class="count"><input type="text" placeholder="напр. 0.80"></td><td class="line-total">0.00 €</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="small-muted" id="eurDesc">Попълнете бройките за банкнотите/монетите. За центовете въведете общата стойност в евро (например 0.80).</div>
+        </section>
+
+        <!-- Summary section -->
+        <section class="section summary card" aria-labelledby="sumTitle">
+          <h3 id="sumTitle" style="margin:0 0 8px">🔢 Общи изчисления</h3>
+
+          <div class="tot-row" style="margin-bottom:8px">
+            <div class="tot-left">Общо налични лева</div>
+            <div class="tot-right" id="totalBgn">0.00 лв</div>
+          </div>
+
+          <div class="tot-row" style="margin-bottom:8px">
+            <div class="tot-left">Общо налични евро</div>
+            <div class="tot-right" id="totalEur">0.00 €</div>
+          </div>
+
+          <div class="tot-row" style="margin-bottom:8px">
+            <div class="tot-left">Общо в лева (всичко конвертирано)</div>
+            <div class="tot-right" id="allInBgn">0.00 лв</div>
+          </div>
+
+          <div class="tot-row" style="margin-bottom:8px">
+            <div class="tot-left">Общо в евро (всичко конвертирано)</div>
+            <div class="tot-right" id="allInEur">0.00 €</div>
+          </div>
+
+          <div class="muted-note">Курс (фиксиран): <strong>1 EUR = 1.95583 BGN</strong></div>
+
+          <div class="actions">
+            <button id="copyShare" class="btn">📋 Копирай и сподели</button>
+            <button id="clearAll" class="secondary btn">🔁 Изчисти всички полета</button>
+          </div>
+
+          <pre id="lastReport" class="report" style="display:none"></pre>
+        </section>
+      </div>
+
+      <footer>Файл: <strong>Currency-helper.html</strong> — отвори в телефона/браузъра си. Работи офлайн.</footer>
+    </div>
+  </div>
+
+<script>
+/* Currency-helper — final
+   - Save as Currency-helper.html
+   - Open in browser (Android/iOS/PC)
+   - Fixed rate: 1 EUR = 1.95583 BGN
+*/
+
+// config
+const FIXED_RATE = 1.95583;
+const STORAGE_THEME = 'currency_helper_theme_v2';
+const STORAGE_VALUES = 'currency_helper_values_v2';
+
+// elements
+const bgnRows = Array.from(document.querySelectorAll('#bgnTable tbody tr'));
+const eurRows = Array.from(document.querySelectorAll('#eurTable tbody tr'));
+const totalBgnEl = document.getElementById('totalBgn');
+const totalEurEl = document.getElementById('totalEur');
+const allInBgnEl = document.getElementById('allInBgn');
+const allInEurEl = document.getElementById('allInEur');
+const copyShareBtn = document.getElementById('copyShare');
+const clearBtn = document.getElementById('clearAll');
+const themeToggle = document.getElementById('themeToggle');
+const lastReportEl = document.getElementById('lastReport');
+
+// helpers
+function fmt(n,dec=2){
+  if(!isFinite(n)) return '—';
+  return Number(n).toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function parseValueRaw(v){
+  if(v===null || v===undefined) return 0;
+  v = v.toString().trim().replace(',', '.');
+  if(v === '') return 0;
+  const n = Number(v);
+  return isFinite(n) ? n : 0;
+}
+
+// compute
+function computeAll(){
+  // BGN
+  let totalBgn = 0;
+  bgnRows.forEach(tr=>{
+    const isCents = tr.dataset.iscents === '1' || tr.dataset.nominal === 'stotinki';
+    const input = tr.querySelector('input');
+    const raw = input.value;
+    let val = 0;
+    if(isCents){
+      val = parseValueRaw(raw); // already in BGN decimal
+    } else {
+      const nominal = Number(tr.dataset.nominal || 0);
+      const qty = parseValueRaw(raw);
+      val = nominal * qty;
+    }
+    tr.querySelector('td.line-total').textContent = fmt(val,2) + ' лв';
+    totalBgn += val;
+  });
+
+  // EUR
+  let totalEur = 0;
+  eurRows.forEach(tr=>{
+    const isCents = tr.dataset.iscents === '1' || tr.dataset.nominal === 'cents';
+    const input = tr.querySelector('input');
+    const raw = input.value;
+    let val = 0;
+    if(isCents){
+      val = parseValueRaw(raw); // already in EUR decimal
+    } else {
+      const nominal = Number(tr.dataset.nominal || 0);
+      const qty = parseValueRaw(raw);
+      val = nominal * qty;
+    }
+    tr.querySelector('td.line-total').textContent = fmt(val,2) + ' €';
+    totalEur += val;
+  });
+
+  totalBgnEl.textContent = fmt(totalBgn,2) + ' лв';
+  totalEurEl.textContent = fmt(totalEur,2) + ' €';
+
+  const allInBgn = totalBgn + (totalEur * FIXED_RATE);
+  const allInEur = totalEur + (totalBgn / FIXED_RATE);
+
+  allInBgnEl.textContent = fmt(allInBgn,2) + ' лв';
+  allInEurEl.textContent = fmt(allInEur,2) + ' €';
+}
+
+// attach listeners to inputs
+function attachInputListeners(){
+  const allInputs = Array.from(document.querySelectorAll('input'));
+  allInputs.forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      computeAll();
+      saveValues();
+    });
+  });
+}
+
+// build report as table-like text
+function buildReportTableText(){
+  // We'll create aligned columns using padding.
+  const rowsText = [];
+  rowsText.push('=== ЛЕВА ===');
+  // compute max widths for nicer alignment
+  let maxNom = 0, maxCount = 0, maxTotal = 0;
+  const leftRows = [];
+  bgnRows.forEach(tr=>{
+    const nom = tr.querySelector('td.nominal').textContent.trim();
+    const inp = tr.querySelector('input').value.trim();
+    const tot = tr.querySelector('td.line-total').textContent.trim();
+    if(inp === '' || parseValueRaw(inp) === 0) return;
+    leftRows.push({nom, inp, tot});
+    if(nom.length > maxNom) maxNom = nom.length;
+    if(inp.length > maxCount) maxCount = inp.length;
+    if(tot.length > maxTotal) maxTotal = tot.length;
+  });
+  leftRows.forEach(r=>{
+    // format: [nom]  x [count] = [total]
+    const line = `${r.nom.padEnd(maxNom)}  x ${r.inp.padStart(maxCount)}  = ${r.tot.padStart(maxTotal)}`;
+    rowsText.push(line);
+  });
+  rowsText.push(`Общо лева: ${totalBgnEl.textContent}`);
+  rowsText.push('');
+  rowsText.push('=== ЕВРО ===');
+
+  // EUR rows
+  maxNom = maxCount = maxTotal = 0;
+  const rightRows = [];
+  eurRows.forEach(tr=>{
+    const nom = tr.querySelector('td.nominal').textContent.trim();
+    const inp = tr.querySelector('input').value.trim();
+    const tot = tr.querySelector('td.line-total').textContent.trim();
+    if(inp === '' || parseValueRaw(inp) === 0) return;
+    rightRows.push({nom, inp, tot});
+    if(nom.length > maxNom) maxNom = nom.length;
+    if(inp.length > maxCount) maxCount = inp.length;
+    if(tot.length > maxTotal) maxTotal = tot.length;
+  });
+  rightRows.forEach(r=>{
+    const line = `${r.nom.padEnd(maxNom)}  x ${r.inp.padStart(maxCount)}  = ${r.tot.padStart(maxTotal)}`;
+    rowsText.push(line);
+  });
+  rowsText.push(`Общо евро: ${totalEurEl.textContent}`);
+  rowsText.push('');
+  rowsText.push('=== ОБЩО ===');
+  rowsText.push(`Всичко в лева: ${allInBgnEl.textContent}`);
+  rowsText.push(`Всичко в евро: ${allInEurEl.textContent}`);
+  return rowsText.join('\n');
+}
+
+// copy & share
+copyShareBtn.addEventListener('click', async ()=>{
+  const txt = buildReportTableText();
+  // display in small preview
+  lastReportEl.style.display = 'block';
+  lastReportEl.textContent = txt;
+
+  // try copy
+  try{
+    await navigator.clipboard.writeText(txt);
+  }catch(e){
+    // ignore
+  }
+  // try native share
+  if(navigator.share){
+    try{
+      await navigator.share({text: txt, title: 'Currency helper — отчет'});
+      return;
+    }catch(e){
+      // canceled or unsupported
+    }
+  }
+  alert('Отчетът е копиран в клипборда (или го копирайте ръчно):\n\n' + txt);
+});
+
+// clear
+clearBtn.addEventListener('click', ()=>{
+  if(!confirm('Сигурни ли сте, че искате да изчистите всички полета?')) return;
+  Array.from(document.querySelectorAll('input')).forEach(i => i.value = '');
+  computeAll();
+  saveValues();
+  lastReportEl.style.display = 'none';
+});
+
+// theme
+function applyTheme(t){
+  if(t === 'dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    themeToggle.textContent = '🌙';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeToggle.textContent = '🌞';
+  }
+  try{ localStorage.setItem(STORAGE_THEME, t); }catch(e){}
+}
+themeToggle.addEventListener('click', ()=>{
+  const cur = localStorage.getItem(STORAGE_THEME) || 'light';
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+});
+(function initTheme(){
+  const stored = localStorage.getItem(STORAGE_THEME);
+  if(stored === 'dark') applyTheme('dark');
+  else applyTheme('light');
+})();
+
+// save/load values
+function saveValues(){
+  try{
+    const data = { bgn: [], eur: [] };
+    bgnRows.forEach(tr => data.bgn.push(tr.querySelector('input').value || ''));
+    eurRows.forEach(tr => data.eur.push(tr.querySelector('input').value || ''));
+    localStorage.setItem(STORAGE_VALUES, JSON.stringify(data));
+  }catch(e){}
+}
+function loadValues(){
+  try{
+    const raw = localStorage.getItem(STORAGE_VALUES);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    bgnRows.forEach((tr,i)=> tr.querySelector('input').value = (data.bgn && data.bgn[i]) ? data.bgn[i] : '');
+    eurRows.forEach((tr,i)=> tr.querySelector('input').value = (data.eur && data.eur[i]) ? data.eur[i] : '');
+  }catch(e){}
+}
+
+// init
+attachInputListeners();
+loadValues();
+computeAll();
+setInterval(()=> computeAll(), 700);
+window.addEventListener('beforeunload', saveValues);
+</script>
+</body>
+</html>
