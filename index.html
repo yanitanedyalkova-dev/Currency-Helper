@@ -351,28 +351,6 @@ themeToggle.addEventListener('click', ()=>{
   if(stored === 'dark') applyTheme('dark');
   else applyTheme('light');
 })();
-  
-/* // theme
-function applyTheme(t){
-  if(t === 'dark'){
-    document.documentElement.setAttribute('data-theme','dark');
-    themeToggle.textContent = '🌙';
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    themeToggle.textContent = '🌞';
-  }
-  try{ localStorage.setItem(STORAGE_THEME, t); }catch(e){}
-}
-themeToggle.addEventListener('click', ()=>{
-  const cur = localStorage.getItem(STORAGE_THEME) || 'light';
-  applyTheme(cur === 'dark' ? 'light' : 'dark');
-});
-(function initTheme(){
-  const stored = localStorage.getItem(STORAGE_THEME);
-  if(stored === 'dark') applyTheme('dark');
-  else applyTheme('light');
-})();
-*/
 
 // save/load values
 function saveValues(){
